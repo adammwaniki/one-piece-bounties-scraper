@@ -13,6 +13,7 @@ A Flask-based web scraper that extracts and serves bounty information from the O
 
 - `GET /` - Welcome message for One Piece fans
 - `GET /bounties` - Returns complete bounty data in JSON format
+- `GET /character/<name or nickname>` - Returns bounty data for a specific character
 
 ## Technologies Used
 

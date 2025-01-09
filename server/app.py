@@ -68,6 +68,66 @@ def home():
 def get_bounties():
     return jsonify(scrape_bounties())
 
+# Define character route that returns bounty data for a specific character
+@app.route('/character/<search_term>')
+def find_character(search_term):
+    bounties = scrape_bounties()
+    found_characters = []
+    
+    # Search through all sections
+    for section, characters in bounties.items():
+        for character in characters:
+            if isinstance(character, dict):  # Ensure we're dealing with character entries
+                # Check if search term matches name or nickname (case insensitive)
+                if search_term.lower() in character['name'].lower() or search_term.lower() in character['nickname'].lower():
+                    character['section'] = section  # Add section info to result
+                    found_characters.append(character)
+    
+    if found_characters:
+        return jsonify({
+            "found": len(found_characters),
+            "characters": found_characters
+        })
+    
+    return jsonify({
+        "message": f"No character found with name or nickname matching '{search_term}'",
+        "found": 0
+    }), 404
+
+# Define crew route that returns bounty data for a specific crew
+@app.route('/crew/<crew_name>')
+def find_crew(crew_name):
+    bounties = scrape_bounties()
+    
+    # Search through all sections for crew name match
+    for section_name, characters in bounties.items():
+        if crew_name.lower() in section_name.lower():
+            # Calculate total crew bounty
+            total_bounty = 0
+            for member in characters:
+                if isinstance(member, dict) and 'bounty' in member:
+                    # Clean and convert bounty string to number
+                    bounty_str = member['bounty'].replace('\u20bd', '').replace(',', '').strip()
+                    try:
+                        bounty_num = int(bounty_str)
+                        total_bounty += bounty_num
+                    except ValueError:
+                        continue
+            
+            return jsonify({
+                "crew_name": section_name,
+                "member_count": len(characters),
+                "total_crew_bounty": f"{total_bounty:,}",
+                "members": characters
+            })
+    
+    return jsonify({
+        "message": f"No crew found with name '{crew_name}'",
+        "found": 0
+    }), 404
+
+
+
 # Run the Flask application in debug mode if script is run directly
 if __name__ == '__main__':
     app.run(debug=True)
