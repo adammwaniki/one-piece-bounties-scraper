@@ -2,71 +2,66 @@
 from flask import Flask, jsonify
 from bs4 import BeautifulSoup
 import requests
+#import time
 
 # Initialize Flask application
 app = Flask(__name__)
 
 def scrape_bounties():
-    # Fetch the One Piece bounties webpage
     page = requests.get('https://onepiece.fandom.com/wiki/Bounties/List')
-    # Parse HTML content using BeautifulSoup
+    #print(page.content)
+    #time.sleep(3)
     soup = BeautifulSoup(page.content, 'html.parser')
+    #print(soup.prettify())
 
-    # Initialize data structures to store bounty information
     bounty_data = {}
-    current_h3_section = None
-    current_h4_section = None
+    current_section = None
+    
+    content_elements = soup.find_all(['h3', 'h4', 'h5', 'table'])
 
-    # Find all h3, h4 headers and tables in the page
-    content_elements = soup.find_all(['h3', 'h4', 'table'])
-
-    # Process each element found
     for element in content_elements:
-        # Handle h3 headers (main sections)
-        if element.name == 'h3':
+        if element.name in ['h3', 'h4', 'h5']:
             span = element.find('span', class_='mw-headline')
-            if span and span.find('a'):
-                current_h3_section = span.find('a').text.strip()
-                bounty_data[current_h3_section] = {}
-                current_h4_section = None
-        
-        # Handle h4 headers (subsections)
-        elif element.name == 'h4':
-            span = element.find('span', class_='mw-headline')
-            if span and span.find('a') and current_h3_section:
-                current_h4_section = span.find('a').text.strip()
-                if isinstance(bounty_data[current_h3_section], dict):
-                    bounty_data[current_h3_section][current_h4_section] = []
-        
-        # Handle tables containing bounty information
+            if span:
+                current_section = span.text.strip()
+                bounty_data[current_section] = []
+                
         elif element.name == 'table' and 'wikitable' in element.get('class', []):
             table_data = []
-            # Process each row in the table
-            for row in element.find_all('tr'):
-                cells = row.find_all('td')
-                # Handle 3-column rows (Name, Nickname, Bounty)
-                if cells and len(cells) == 3:
-                    table_data.append({
-                        "Name": cells[0].text.strip(),
-                        "Nickname": cells[1].text.strip(),
-                        "Bounty": cells[2].text.strip()
-                    })
-                # Handle other row formats
-                elif cells:
-                    table_data.append([cell.text.strip() for cell in cells])
+            rows = element.find_all('tr')
+            i = 0
             
-            # Store table data in appropriate section
-            if current_h4_section and current_h3_section and isinstance(bounty_data[current_h3_section], dict):
-                bounty_data[current_h3_section][current_h4_section] = table_data
-            elif current_h3_section:
-                bounty_data[current_h3_section] = table_data
+            while i < len(rows):
+                cells = rows[i].find_all('td')
+                if cells and len(cells) == 3:
+                    entry = {
+                        "name": cells[0].text.strip(),
+                        "nickname": cells[1].text.replace('\"' , "").split('[')[0].strip(),
+                        "bounty": cells[2].text.split('[')[0].strip()
+                    }
+                    
+                    # Handle supplementary details in next row
+                    if i + 1 < len(rows):
+                        next_cells = rows[i + 1].find_all('td')
+                        if next_cells:
+                            entry["supplementary details"] = ' '.join([cell.text.split('[')[0].strip() for cell in next_cells])
+                            i += 1  # Skip the processed next row
+                            
+                    table_data.append(entry)
+                elif cells:
+                    table_data.append([cell.text.split('[')[0].strip() for cell in cells])
+                i += 1
+                    
+            if current_section:
+                bounty_data[current_section] = table_data
 
     return bounty_data
+
 
 # Define home route
 @app.route('/')
 def home():
-    return jsonify({"message": "Hello One Piece fans!"})
+    return jsonify({"message": "Hello One Piece fans! This is a simple API for One Piece Bounties. Check out the /bounties route for the data."})
 
 # Define bounties route that returns all scraped data
 @app.route('/bounties')

@@ -28,54 +28,64 @@ A Flask-based web scraper that extracts and serves bounty information from the O
 git clone https://github.com/adammwaniki/one-piece-bounties-scraper.git
 
 
-2. Install dependencies:
+2. Navigate to the project directory:
 ```bash```
-pip install flask beautifulsoup4 requests
+- cd one-piece-bounties-scraper/server
 
 
-3. Run the application:
+3. Activate the virtual environment:
 ```bash```
-cd one-piece-bounties-scraper/server
 source onePiece/bin/activate
-python3 app.py
 
--The server will start on http://localhost:5000
+
+4. Install dependencies:
+```bash```
+pip install -r requirements.txt
+
+
+5. Run the application:
+```bash```
+- python3 app.py
+    or
+- python3 -m flask run
+
+- The server will start on http://localhost:5000
+
 
 ## Sample Response
 ```json```
 {
-    "Section Name": {
-        "Subsection Name": [
-            {
-                "Name": "Character Name",
-                "Nickname": "Character Nickname",
-                "Bounty": "Bounty Amount"
-            },
-            [
-                "Additional Information"
-            ]
-        ]
-    }
+
+    "Crew Name": [
+        {
+            "bounty": "Bounty Amount",
+            "name": "Character Name",
+            "nickname": "Character Nickname",
+            "supplementary details": "Additional information"
+        },
+    ]
 }
 
-"Emperors": {
+```example```
+
+{
     "Beasts Pirates": [
-      {
-        "Bounty": "4,611,100,000",
-        "Name": "Kaidou",
-        "Nickname": "of the Beasts"
-      },
-      [
-        "First Bounty: Kaidou received his first bounty of 70,000,000 around the age of 13, after escaping from a Marine ship.Current Bounty: Kaidou's current bounty is 4,611,100,000, and currently the highest known active bounty."
-      ],
-      {
-        "Bounty": "1,390,000,000",
-        "Name": "King",
-        "Nickname": "The Conflagration"
-      },
-      [
-        "As one of the three Disasters, he is one of Kaidou's right-hand men. Being the only surviving lunarian may have also influenced it."
-      ],
+        {
+        "bounty": "4,611,100,000",
+        "name": "Kaidou",
+        "nickname": "of the Beasts",
+        "supplementary details": "First Bounty: Kaidou received his first bounty of 70,000,000 around the age of 13, after escaping from a Marine ship."
+        },
+        {
+        "bounty": "1,390,000,000",
+        "name": "King",
+        "nickname": "The Conflagration",
+        "supplementary details": "As one of the three Disasters, he is one of Kaidou's right-hand men. Being the only surviving lunarian may have also influenced it."
+        },
+        .
+        .
+        .
+
     ]
 }
 
