@@ -2,18 +2,17 @@
 from flask import Flask, jsonify
 from bs4 import BeautifulSoup
 import requests
-#import time
+from models import Database
 
 # Initialize Flask application
 app = Flask(__name__)
+db = Database()
 
 def scrape_bounties():
     page = requests.get('https://onepiece.fandom.com/wiki/Bounties/List')
-    #print(page.content)
-    #time.sleep(3)
     soup = BeautifulSoup(page.content, 'html.parser')
-    #print(soup.prettify())
-
+    
+    # Initialize variables
     bounty_data = {}
     current_section = None
     
@@ -126,8 +125,16 @@ def find_crew(crew_name):
         "found": 0
     }), 404
 
+# Define refresh route that updates the database with the latest data
+@app.route('/refresh-data')
+def refresh_data():
+    bounties = scrape_bounties()
+    db.store_bounties(bounties)
+    return jsonify({"message": "Database updated successfully"})
 
-
-# Run the Flask application in debug mode if script is run directly
 if __name__ == '__main__':
+    db.init_db()  # Creates characters table
+    bounties = scrape_bounties()
+    db.store_bounties(bounties)  # Stores characters and then creates/populates crews table
     app.run(debug=True)
+
